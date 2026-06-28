@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aegis Heat - Smart Alert & Safety App</title>
+    <meta name="description" content="Stay safe during extreme temperatures with Aegis Heat. Get live heatwave alerts, personalized hydration goals, checklist recommendations, and interactive weather simulations.">
+    <!-- Google Fonts: Outfit for Headings, Inter for Body -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="heat-safe">
+    <!-- Gradient background effect -->
+    <div class="gradient-bg"></div>
+    <div class="gradient-glow"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="brand">
+                <div class="logo-icon">
+                    <i data-lucide="thermometer-sun" class="icon-pulse"></i>
+                </div>
+                <div>
+                    <h1>Aegis Heat</h1>
+                    <p class="tagline">Smart Heatwave Alert & Safety Advisor</p>
+                </div>
+            </div>
+            
+            <!-- Location Search / Geo-lookup -->
+            <div class="search-container">
+                <form id="search-form" class="search-form">
+                    <div class="input-wrapper">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" id="city-input" placeholder="Search city (e.g. Phoenix, Delhi, Sydney)..." autocomplete="off" required>
+                        <button type="button" id="locate-btn" title="Use current location">
+                            <i data-lucide="map-pin"></i>
+                        </button>
+                    </div>
+                    <button type="submit" class="search-submit-btn">Search</button>
+                </form>
+                <div id="search-suggestions" class="search-suggestions hidden"></div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Layout -->
+        <main class="dashboard-grid">
+            
+            <!-- Left Side: Live Heat Status & Dashboard metrics -->
+            <section class="dashboard-card card-primary" id="status-card">
+                <div class="card-header">
+                    <div class="header-title">
+                        <i data-lucide="activity"></i>
+                        <h2>Live Heat Assessment</h2>
+                    </div>
+                    <div class="badge status-badge" id="heat-badge">Safe Level</div>
+                </div>
+
+                <div class="heat-gauge-container">
+                    <div class="gauge-arc-wrapper">
+                        <svg class="gauge-svg" viewBox="0 0 200 100">
+                            <!-- Background Track -->
+                            <path class="gauge-track" d="M20 90 A80 80 0 0 1 180 90" fill="none" stroke-width="12" stroke-linecap="round"></path>
+                            <!-- Colored Fill (Progress) -->
+                            <path id="gauge-fill" class="gauge-fill-path" d="M20 90 A80 80 0 0 1 180 90" fill="none" stroke-width="12" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="251.3"></path>
+                        </svg>
+                        <div class="gauge-readout">
+                            <span id="current-temp">24°C</span>
+                            <span class="temp-unit-toggle" id="unit-toggle" title="Toggle °C / °F">Celsius</span>
+                        </div>
+                    </div>
+                    <div class="gauge-labels">
+                        <span>Safe</span>
+                        <span>Caution</span>
+                        <span>Danger</span>
+                        <span>Extreme</span>
+                    </div>
+                </div>
+
+                <div class="danger-message-box" id="danger-msg-box">
+                    <h3 id="danger-title">Temperature is Comfortable</h3>
+                    <p id="danger-desc">No heat alerts in effect. Ideal for outdoor recreation. Stay hydrated as usual.</p>
+                </div>
+
+                <!-- Weather metrics grid -->
+                <div class="metrics-grid">
+                    <div class="metric-item">
+                        <div class="metric-icon humidity-icon">
+                            <i data-lucide="droplets"></i>
+                        </div>
+                        <div class="metric-info">
+                            <span class="metric-label">Humidity</span>
+                            <span class="metric-value" id="val-humidity">45%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-item">
+                        <div class="metric-icon index-icon">
+                            <i data-lucide="flame"></i>
+                        </div>
+                        <div class="metric-info">
+                            <span class="metric-label">Heat Index</span>
+                            <span class="metric-value" id="val-heat-index">24°C</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-item">
+                        <div class="metric-icon uv-icon">
+                            <i data-lucide="sun"></i>
+                        </div>
+                        <div class="metric-info">
+                            <span class="metric-label">UV Index</span>
+                            <span class="metric-value" id="val-uv">2 (Low)</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-item">
+                        <div class="metric-icon wind-icon">
+                            <i data-lucide="wind"></i>
+                        </div>
+                        <div class="metric-info">
+                            <span class="metric-label">Wind Speed</span>
+                            <span class="metric-value" id="val-wind">12 km/h</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="location-timestamp">
+                    <i data-lucide="globe"></i>
+                    <span id="location-name">Default (Simulation)</span>
+                    <span class="divider">|</span>
+                    <span id="last-updated">Just Now</span>
+                </div>
+            </section>
+
+            <!-- Right Side: Smart Recommendations & Personalization -->
+            <section class="dashboard-card" id="safety-card">
+                <div class="card-header">
+                    <div class="header-title">
+                        <i data-lucide="shield-alert"></i>
+                        <h2>Personalized Safety Plan</h2>
+                    </div>
+                </div>
+
+                <!-- Vulnerable profile selector -->
+                <div class="profile-selector">
+                    <span class="section-subtitle">Select risk profiles for tailored advice:</span>
+                    <div class="chips-container">
+                        <button class="profile-chip" data-profile="senior">
+                            <i data-lucide="user-check"></i> Seniors (65+)
+                        </button>
+                        <button class="profile-chip" data-profile="child">
+                            <i data-lucide="baby"></i> Kids & Infants
+                        </button>
+                        <button class="profile-chip" data-profile="worker">
+                            <i data-lucide="hard-hat"></i> Outdoor Workers
+                        </button>
+                        <button class="profile-chip" data-profile="pet">
+                            <i data-lucide="dog"></i> Pets / Animals
+                        </button>
+                        <button class="profile-chip" data-profile="pregnant">
+                            <i data-lucide="heart"></i> Pregnancy
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Water Hydration Calculator Widget -->
+                <div class="hydration-widget">
+                    <div class="widget-icon">
+                        <i data-lucide="glass-water" class="icon-float"></i>
+                    </div>
+                    <div class="widget-details">
+                        <h4>Recommended Heat-Hydration Intake</h4>
+                        <div class="hydration-metrics">
+                            <div>
+                                <span class="hydration-value" id="water-requirement">2.5L</span>
+                                <span class="hydration-unit">/ day</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" id="hydration-progress" style="width: 40%;"></div>
+                            </div>
+                        </div>
+                        <p class="hydration-tip" id="hydration-tip">Aim to drink 1 cup (250ml) every hour during warm periods.</p>
+                    </div>
+                </div>
+
+                <!-- Action Items Checklist -->
+                <div class="checklist-section">
+                    <div class="checklist-header">
+                        <h3>Daily Heat-Safety Actions</h3>
+                        <span class="checklist-counter" id="checklist-counter">0/4 Done</span>
+                    </div>
+                    
+                    <div class="checklist-items" id="safety-checklist">
+                        <!-- Checklist elements will be loaded dynamically by script -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bottom Left: Forecast Charts -->
+            <section class="dashboard-card forecast-card" id="forecast-card">
+                <div class="card-header">
+                    <div class="header-title">
+                        <i data-lucide="trending-up"></i>
+                        <h2>Hourly Heat & UV Wave Forecast</h2>
+                    </div>
+                    <div class="chart-legend">
+                        <span class="legend-dot temp-dot"></span> Temp
+                        <span class="legend-dot uv-dot"></span> UV
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Bottom Right: Interactive Heat Index Calculator & Simulator -->
+            <section class="dashboard-card tools-card" id="tools-card">
+                <div class="tabs-header">
+                    <button class="tab-btn active" data-tab="simulator-tab">
+                        <i data-lucide="terminal"></i> Weather Simulator
+                    </button>
+                    <button class="tab-btn" data-tab="calculator-tab">
+                        <i data-lucide="calculator"></i> Heat Index Calculator
+                    </button>
+                </div>
+
+                <!-- Tab Contents: Weather Simulator -->
+                <div class="tab-content" id="simulator-tab">
+                    <p class="tab-desc">Simulate extreme weather profiles to test warnings, recommendations, and gauge reactions instantly.</p>
+                    
+                    <div class="simulator-grid">
+                        <button class="sim-btn" data-temp="22" data-humidity="40" data-uv="1" data-name="Spring Morning" data-class="heat-safe">
+                            <span class="sim-icon safe-icon"><i data-lucide="smile"></i></span>
+                            <span class="sim-label">Spring Morning</span>
+                            <span class="sim-temp">22°C, 40% RH</span>
+                        </button>
+
+                        <button class="sim-btn" data-temp="33" data-humidity="75" data-uv="8" data-name="Tropical Sultry Peak" data-class="heat-caution">
+                            <span class="sim-icon caution-icon"><i data-lucide="cloud-sun"></i></span>
+                            <span class="sim-label">Tropical Sultry</span>
+                            <span class="sim-temp">33°C, 75% RH</span>
+                        </button>
+
+                        <button class="sim-btn" data-temp="41" data-humidity="20" data-uv="10" data-name="Arid Desert Wave" data-class="heat-danger">
+                            <span class="sim-icon danger-icon"><i data-lucide="zap"></i></span>
+                            <span class="sim-label">Desert Wave</span>
+                            <span class="sim-temp">41°C, 20% RH</span>
+                        </button>
+
+                        <button class="sim-btn" data-temp="45" data-humidity="60" data-uv="12" data-name="Extreme Heat Apocalypse" data-class="heat-extreme">
+                            <span class="sim-icon extreme-icon"><i data-lucide="skull"></i></span>
+                            <span class="sim-label">Heatwave Crisis</span>
+                            <span class="sim-temp">45°C, 60% RH</span>
+                        </button>
+                    </div>
+
+                    <!-- Custom simulation inputs -->
+                    <div class="custom-sim-box">
+                        <h4>Or create a custom profile:</h4>
+                        <div class="custom-sim-row">
+                            <div class="sim-input-col">
+                                <label for="sim-temp-input">Temp (°C): <span id="sim-temp-val">35</span></label>
+                                <input type="range" id="sim-temp-input" min="15" max="55" value="35">
+                            </div>
+                            <div class="sim-input-col">
+                                <label for="sim-humidity-input">Humidity (%): <span id="sim-humidity-val">50</span></label>
+                                <input type="range" id="sim-humidity-input" min="10" max="100" value="50">
+                            </div>
+                        </div>
+                        <button class="apply-custom-sim-btn" id="apply-custom-sim">Apply Custom Simulation</button>
+                    </div>
+                </div>
+
+                <!-- Tab Contents: Heat Index Calculator -->
+                <div class="tab-content hidden" id="calculator-tab">
+                    <p class="tab-desc">The Apparent Temperature is how hot it feels when humidity is factored in with air temperature. Evaporation of sweat slows down in high humidity, amplifying body heat storage.</p>
+                    
+                    <div class="calculator-inputs">
+                        <div class="calc-row">
+                            <div class="calc-label-info">
+                                <label for="calc-temp">Air Temperature</label>
+                                <span class="calc-numeric-val" id="calc-temp-val">30°C</span>
+                            </div>
+                            <input type="range" id="calc-temp" min="20" max="50" step="1" value="30">
+                        </div>
+
+                        <div class="calc-row">
+                            <div class="calc-label-info">
+                                <label for="calc-humidity">Relative Humidity</label>
+                                <span class="calc-numeric-val" id="calc-humidity-val">60%</span>
+                            </div>
+                            <input type="range" id="calc-humidity" min="0" max="100" step="1" value="60">
+                        </div>
+                    </div>
+
+                    <div class="calculator-result">
+                        <div class="result-box">
+                            <span class="result-title font-sub">Calculated Apparent Temp</span>
+                            <span class="result-number" id="calc-result">33°C</span>
+                            <span class="badge result-badge" id="calc-risk-badge">Caution Level</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>&copy; 2026 Aegis Heatwave Protection. Powered by Open-Meteo API. Stay Safe. Stay Hydrated.</p>
+            <div class="footer-links">
+                <a href="#about" id="science-about-btn">Science Behind Heat Index</a>
+                <span class="divider">•</span>
+                <a href="#emergency" id="emergency-contacts-btn">Emergency Warnings</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Science Dialog/Modal -->
+    <div class="modal-overlay hidden" id="science-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>The Science of Apparent Temperature</h2>
+                <button class="modal-close" id="close-science-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>When the human body overheats, it relies on the evaporation of sweat to cool down. However, when humidity is high, the moisture level in the surrounding air is already elevated, which slows down the rate of evaporation.</p>
+                <p>Because sweat cannot evaporate efficiently, the body is unable to shed excess heat as effectively. Consequently, you feel much hotter than the actual thermometer reading. This combined effect is defined as the <strong>Heat Index</strong> or <strong>Apparent Temperature</strong>.</p>
+                <h3>Safety Threshold Categories (NOAA Standards)</h3>
+                <table class="modal-table">
+                    <thead>
+                        <tr>
+                            <th>Heat Index Range</th>
+                            <th>Severity Category</th>
+                            <th>Associated Danger & Health Hazards</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="cat-safe">
+                            <td>Below 27°C (80°F)</td>
+                            <td>Safe / Normal</td>
+                            <td>Low risk of heat stress. Ideal weather conditions.</td>
+                        </tr>
+                        <tr class="cat-caution">
+                            <td>27°C - 32°C (80°F - 90°F)</td>
+                            <td>Caution</td>
+                            <td>Fatigue is possible with prolonged exposure and activity.</td>
+                        </tr>
+                        <tr class="cat-extreme-caution">
+                            <td>32°C - 41°C (90°F - 105°F)</td>
+                            <td>Extreme Caution</td>
+                            <td>Heat cramps, exhaustion, and sunstroke are possible.</td>
+                        </tr>
+                        <tr class="cat-danger">
+                            <td>41°C - 54°C (105°F - 130°F)</td>
+                            <td>Danger</td>
+                            <td>Heat exhaustion, cramps, and sunstroke likely with activity.</td>
+                        </tr>
+                        <tr class="cat-extreme">
+                            <td>Over 54°C (130°F)</td>
+                            <td>Extreme Danger</td>
+                            <td>Heatstroke / sunstroke is imminent. Immediate intervention required.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Modal -->
+    <div class="modal-overlay hidden" id="emergency-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Heat Stroke vs. Heat Exhaustion Symptoms</h2>
+                <button class="modal-close" id="close-emergency-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="comparison-grid">
+                    <div class="symptom-card warning-card">
+                        <h3>Heat Exhaustion (Act Immediately)</h3>
+                        <p class="subtitle">Your body is struggling to stay cool.</p>
+                        <ul>
+                            <li><i data-lucide="check-circle"></i> Faintness or dizziness</li>
+                            <li><i data-lucide="check-circle"></i> Excessive sweating</li>
+                            <li><i data-lucide="check-circle"></i> Cool, pale, clammy skin</li>
+                            <li><i data-lucide="check-circle"></i> Nausea or vomiting</li>
+                            <li><i data-lucide="check-circle"></i> Rapid, weak pulse</li>
+                            <li><i data-lucide="check-circle"></i> Muscle cramps</li>
+                        </ul>
+                        <div class="action-alert">
+                            <strong>Action:</strong> Move to an air-conditioned room, drink water, take a cool shower, or use cool compresses.
+                        </div>
+                    </div>
+                    <div class="symptom-card extreme-card">
+                        <h3>Heat Stroke (Medical Emergency)</h3>
+                        <p class="subtitle">Call Emergency Services (911 / 112) Immediately!</p>
+                        <ul>
+                            <li><i data-lucide="alert-triangle"></i> Throbbing headache</li>
+                            <li><i data-lucide="alert-triangle"></i> No sweating (dry skin) or excessive sweating</li>
+                            <li><i data-lucide="alert-triangle"></i> Body temperature above 39.4°C (103°F)</li>
+                            <li><i data-lucide="alert-triangle"></i> Red, hot, dry skin</li>
+                            <li><i data-lucide="alert-triangle"></i> Rapid, strong pulse</li>
+                            <li><i data-lucide="alert-triangle"></i> May lose consciousness</li>
+                        </ul>
+                        <div class="action-alert danger">
+                            <strong>Action:</strong> Call emergency medical services. Move the victim to cool shades, and cool them with cold water/ice packs until help arrives. Do not give fluids to drink if unconscious.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script loading -->
+    <script src="app.js"></script>
+</body>
+</html>
